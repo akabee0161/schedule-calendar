@@ -1,73 +1,71 @@
-# React + TypeScript + Vite
+# Family Calendar Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+家族向けのシンプルなカレンダー・ダッシュボードです。日本の祝日や家族の予定がひと目で分かり、スマホ・PC両方で快適に閲覧できます。
 
-Currently, two official plugins are available:
+## 技術スタック
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend**: React (Vite), TypeScript, Tailwind CSS
+- **日付処理**: date-fns, @holiday-jp/holiday_jp
+- **Infrastructure**: AWS CDK v2 (TypeScript) - S3 + CloudFront
+- **CI/CD**: GitHub Actions
 
-## React Compiler
+## ディレクトリ構成
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+├── src/
+│   ├── components/
+│   │   ├── CalendarGrid.tsx      # 日〜土のグリッド表示
+│   │   └── CalendarHeader.tsx    # 年月表示 + ナビゲーション
+│   ├── data/
+│   │   └── events.ts            # 予定データ（ここを編集して予定管理）
+│   ├── hooks/
+│   │   └── useCalendar.ts       # 月ナビゲーション付きカスタムフック
+│   └── utils/
+│       └── calendar.ts          # 日付計算 + 祝日判定ロジック
+├── infra/
+│   ├── bin/infra.ts             # CDK エントリーポイント
+│   ├── lib/calendar-stack.ts    # S3 + CloudFront スタック定義
+│   └── test/infra.test.ts       # インフラテスト
+├── .github/workflows/
+│   └── deploy.yml               # GitHub Actions CI/CD
+└── README_DEPLOY.md             # デプロイ手順書
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 予定の管理方法（GitOps）
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+`src/data/events.ts` を直接編集して `main` ブランチに push するだけで、自動ビルド → S3 デプロイ → CloudFront キャッシュ無効化が実行されます。
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```typescript
+export const events: Record<string, CalendarEvent[]> = {
+  "2026-03-23": [
+    { title: "歯医者", color: "#3b82f6" },
+  ],
+};
 ```
+
+## ローカル開発
+
+```bash
+npm install
+npm run dev
+```
+
+## デプロイ
+
+詳細は [README_DEPLOY.md](README_DEPLOY.md) を参照。
+
+```bash
+# フロントエンドビルド
+npm run build
+
+# CDK デプロイ
+cd infra && npx cdk deploy
+```
+
+## カレンダーの特徴
+
+- 日本のカレンダー慣習（日曜始まり、曜日: 日月火水木金土）
+- 土曜: 青、日曜・祝日: 赤の色分け
+- 当日セルのハイライト（黄色背景）
+- holiday-jp による祝日自動判定・祝日名表示
+- 予定ラベルの色付き表示
