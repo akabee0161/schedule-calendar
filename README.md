@@ -17,11 +17,16 @@
 │   │   ├── CalendarGrid.tsx      # 日〜土のグリッド表示
 │   │   └── CalendarHeader.tsx    # 年月表示 + ナビゲーション
 │   ├── data/
-│   │   └── events.ts            # 予定データ（ここを編集して予定管理）
+│   │   ├── types.ts             # CalendarEvent 型定義
+│   │   ├── events.ts            # 予定データ（gitignore済み・要セットアップ）
+│   │   └── events.ts.sample     # events.ts のテンプレート
 │   ├── hooks/
-│   │   └── useCalendar.ts       # 月ナビゲーション付きカスタムフック
+│   │   ├── useCalendar.ts       # 月ナビゲーション付きカスタムフック
+│   │   └── useEvents.ts         # S3 から events.json をfetchするフック
 │   └── utils/
 │       └── calendar.ts          # 日付計算 + 祝日判定ロジック
+├── scripts/
+│   └── upload-events.ts         # events.ts → events.json 生成 + S3 アップロード
 ├── infra/
 │   ├── bin/infra.ts             # CDK エントリーポイント
 │   ├── lib/calendar-stack.ts    # S3 + CloudFront スタック定義
@@ -31,22 +36,47 @@
 └── README_DEPLOY.md             # デプロイ手順書
 ```
 
-## 予定の管理方法（GitOps）
+## 予定の管理方法
 
-`src/data/events.ts` を直接編集して `main` ブランチに push するだけで、自動ビルド → S3 デプロイ → CloudFront キャッシュ無効化が実行されます。
+予定データ (`events.ts`) は個人情報を含むため **git 管理外** です。ローカルで編集後、S3 に直接アップロードします。
+
+### セットアップ（初回）
+
+```bash
+cp src/data/events.ts.sample src/data/events.ts
+```
+
+### 予定の編集と反映
 
 ```typescript
-export const events: Record<string, CalendarEvent[]> = {
-  "2026-03-23": [
-    { title: "歯医者", color: "#3b82f6" },
+// src/data/events.ts を編集
+const rawEvents: Record<string, CalendarEvent[]> = {
+  "2026-04-01": [
+    { title: "入学式", color: "#f59e0b" },
+  ],
+  "2026-04-29/2026-05-05": [
+    { title: "GW", color: "#EF9E9E" },
   ],
 };
 ```
+
+編集後、S3 にアップロード（バケット名は CloudFormation から自動取得）：
+
+```bash
+npm run upload-events
+```
+
+git push は不要です。アップロード後すぐにブラウザに反映されます。
 
 ## ローカル開発
 
 ```bash
 npm install
+
+# events.json をローカル生成（public/events.json に出力）
+npm run gen-events
+
+# 開発サーバー起動
 npm run dev
 ```
 
@@ -55,11 +85,8 @@ npm run dev
 詳細は [README_DEPLOY.md](README_DEPLOY.md) を参照。
 
 ```bash
-# フロントエンドビルド
-npm run build
-
-# CDK デプロイ
-cd infra && npx cdk deploy
+# フロントエンドビルド + CDK デプロイ（GitHub Actions が自動実行）
+git push origin main
 ```
 
 ## カレンダーの特徴
