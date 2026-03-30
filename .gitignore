@@ -27,3 +27,6 @@ dist-ssr
 cdk.out
 *.js.map
 *.d.ts
+
+# Personal schedule data (use events.ts.sample as template)
+src/data/events.ts
