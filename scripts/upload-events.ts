@@ -1,12 +1,13 @@
 /**
  * events.ts から events.json を生成し、S3 にアップロードするスクリプト。
  *
- * ローカル開発用 (S3_BUCKET_NAME 未設定): public/events.json を生成するだけ
- * 本番アップロード: S3_BUCKET_NAME を指定して実行
+ * バケット名は CloudFormation outputs から自動取得する。
+ * 手動指定したい場合は S3_BUCKET_NAME 環境変数で上書き可能。
  *
  * 使い方:
- *   npm run gen-events                          # public/events.json を生成 (ローカル dev 用)
- *   S3_BUCKET_NAME=<bucket> npm run upload-events  # S3 にアップロード
+ *   npm run gen-events      # public/events.json を生成 (ローカル dev 用、S3 不要)
+ *   npm run upload-events   # CloudFormation から自動取得して S3 にアップロード
+ *   S3_BUCKET_NAME=<bucket> npm run upload-events  # バケット名を手動指定
  */
 
 import { writeFileSync, mkdirSync } from "fs";
@@ -27,11 +28,33 @@ const localPath = join(publicDir, "events.json");
 writeFileSync(localPath, json, "utf-8");
 console.log(`Generated: ${localPath}`);
 
-// S3_BUCKET_NAME が指定されている場合は S3 にアップロード
-const bucket = process.env.S3_BUCKET_NAME;
+// gen-events として呼ばれた場合はここで終了
+if (process.argv[1]?.endsWith("upload-events.ts") === false) process.exit(0);
+
+// バケット名を解決: 環境変数 > CloudFormation outputs
+let bucket = process.env.S3_BUCKET_NAME;
+
 if (!bucket) {
-  console.log("S3_BUCKET_NAME not set — skipping S3 upload.");
-  process.exit(0);
+  console.log("Resolving bucket name from CloudFormation...");
+  const {
+    CloudFormationClient,
+    DescribeStacksCommand,
+  } = await import("@aws-sdk/client-cloudformation");
+
+  const cfn = new CloudFormationClient({ region: "ap-northeast-1" });
+  const { Stacks } = await cfn.send(
+    new DescribeStacksCommand({ StackName: "FamilyCalendarStack" }),
+  );
+  bucket = Stacks?.[0]?.Outputs?.find((o) => o.OutputKey === "BucketName")
+    ?.OutputValue;
+
+  if (!bucket) {
+    console.error(
+      "Could not resolve bucket name. Run `npx cdk deploy` first, or set S3_BUCKET_NAME.",
+    );
+    process.exit(1);
+  }
+  console.log(`Resolved bucket: ${bucket}`);
 }
 
 const { S3Client, PutObjectCommand } = await import("@aws-sdk/client-s3");
