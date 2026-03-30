@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { CalendarEvent } from "../data/events";
+import type { CalendarEvent } from "../data/types";
 
 export function useEvents(): Record<string, CalendarEvent[]> {
   const [events, setEvents] = useState<Record<string, CalendarEvent[]>>({});

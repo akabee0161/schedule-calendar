@@ -1,9 +1,6 @@
 import { eachDayOfInterval, parseISO, format } from "date-fns";
 
-export interface CalendarEvent {
-  title: string;
-  color?: string;
-}
+export type { CalendarEvent } from "./types";
 
 /**
  * 日付キーの形式:

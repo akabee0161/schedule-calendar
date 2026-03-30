@@ -1,5 +1,5 @@
 import type { CalendarDay } from "../utils/calendar";
-import type { CalendarEvent } from "../data/events";
+import type { CalendarEvent } from "../data/types";
 
 const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"] as const;
 
