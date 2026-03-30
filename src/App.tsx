@@ -1,11 +1,12 @@
 import { useCalendar } from "./hooks/useCalendar";
+import { useEvents } from "./hooks/useEvents";
 import { CalendarHeader } from "./components/CalendarHeader";
 import { CalendarGrid } from "./components/CalendarGrid";
-import { events } from "./data/events";
 
 function App() {
   const { year, month, days, goToPrevMonth, goToNextMonth, goToToday } =
     useCalendar();
+  const events = useEvents();
 
   return (
     <div className="mx-auto max-w-2xl">

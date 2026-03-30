@@ -57,6 +57,8 @@ export class CalendarStack extends cdk.Stack {
       destinationBucket: siteBucket,
       distribution,
       distributionPaths: ["/*"],
+      // events.json は別途手動アップロードするため削除しない
+      prune: false,
     });
 
     // 出力

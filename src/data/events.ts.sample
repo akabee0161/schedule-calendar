@@ -14,7 +14,7 @@ export interface CalendarEvent {
  *   cp src/data/events.ts.sample src/data/events.ts
  *   その後、events.ts を編集してください。
  */
-const rawEvents: Record<string, CalendarEvent[]> = {
+export const rawEvents: Record<string, CalendarEvent[]> = {
   "2026-01-01": [
     { title: "元日", color: "#ef4444" },
   ],
@@ -26,7 +26,7 @@ const rawEvents: Record<string, CalendarEvent[]> = {
   ],
 };
 
-function expandEvents(
+export function expandEvents(
   raw: Record<string, CalendarEvent[]>,
 ): Record<string, CalendarEvent[]> {
   const result: Record<string, CalendarEvent[]> = {};

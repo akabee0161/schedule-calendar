@@ -30,3 +30,4 @@ cdk.out
 
 # Personal schedule data (use events.ts.sample as template)
 src/data/events.ts
+public/events.json
