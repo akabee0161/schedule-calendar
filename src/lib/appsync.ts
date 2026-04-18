@@ -1,0 +1,108 @@
+const ENDPOINT = import.meta.env.VITE_APPSYNC_ENDPOINT as string;
+const API_KEY = import.meta.env.VITE_APPSYNC_API_KEY as string;
+
+// ─── HTTP GraphQL クライアント ────────────────────────────────────────
+
+interface GqlResponse<T> {
+  data?: T;
+  errors?: { message: string }[];
+}
+
+export async function gql<T>(
+  query: string,
+  variables?: Record<string, unknown>,
+): Promise<T> {
+  const res = await fetch(ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": API_KEY,
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+  const json: GqlResponse<T> = await res.json();
+  if (json.errors?.length) {
+    throw new Error(json.errors[0].message);
+  }
+  return json.data as T;
+}
+
+// ─── WebSocket サブスクリプション ─────────────────────────────────────
+
+/**
+ * AppSync リアルタイムサブスクリプションを開始する。
+ * @returns 購読を停止するクリーンアップ関数
+ */
+export function subscribe(
+  query: string,
+  onData: (data: Record<string, unknown>) => void,
+): () => void {
+  // HTTP エンドポイント → WebSocket エンドポイントに変換
+  const realtimeEndpoint = ENDPOINT.replace("https://", "wss://").replace(
+    ".appsync-api.",
+    ".appsync-realtime-api.",
+  );
+
+  const host = new URL(ENDPOINT).host;
+  const header = btoa(JSON.stringify({ host, "x-api-key": API_KEY }));
+  const payload = btoa("{}");
+
+  const ws = new WebSocket(
+    `${realtimeEndpoint}?header=${header}&payload=${payload}`,
+    "graphql-ws",
+  );
+
+  const subId = crypto.randomUUID();
+  let closed = false;
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: "connection_init" }));
+  };
+
+  ws.onmessage = (event: MessageEvent<string>) => {
+    const msg = JSON.parse(event.data) as {
+      type: string;
+      id?: string;
+      payload?: { data?: Record<string, unknown> };
+    };
+
+    switch (msg.type) {
+      case "connection_ack":
+        ws.send(
+          JSON.stringify({
+            id: subId,
+            type: "start",
+            payload: {
+              data: JSON.stringify({ query }),
+              extensions: {
+                authorization: { host, "x-api-key": API_KEY },
+              },
+            },
+          }),
+        );
+        break;
+      case "data":
+        if (msg.id === subId && msg.payload?.data) {
+          onData(msg.payload.data);
+        }
+        break;
+      case "ka":
+        break; // keep-alive: 無視
+    }
+  };
+
+  ws.onerror = () => {
+    // 接続エラー時は静かに終了（再接続は行わない）
+  };
+
+  return () => {
+    if (closed) return;
+    closed = true;
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ id: subId, type: "stop" }));
+      ws.close();
+    } else {
+      ws.close();
+    }
+  };
+}

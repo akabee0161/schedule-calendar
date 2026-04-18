@@ -16,58 +16,72 @@ npm install
 cd infra && npm install && cd ..
 ```
 
-### 2. events.ts を用意
-
-```bash
-cp src/data/events.ts.sample src/data/events.ts
-# src/data/events.ts を編集して予定を入力
-```
-
-### 3. CDK デプロイ（インフラ構築）
+### 2. CDK デプロイ（インフラ構築）
 
 ```bash
 cd infra && npx cdk deploy
 ```
 
-デプロイ完了後、CloudFront のドメイン名と S3 バケット名が出力されます。
+デプロイ完了後、以下の Outputs が表示されます：
 
-### 4. events.json を S3 にアップロード
-
-```bash
-npm run upload-events
+```
+FamilyCalendarStack.AppSyncEndpoint = https://xxxx.appsync-api.ap-northeast-1.amazonaws.com/graphql
+FamilyCalendarStack.AppSyncApiKey   = da2-xxxx
+FamilyCalendarStack.DistributionDomainName = xxxx.cloudfront.net
 ```
 
-バケット名は CloudFormation outputs から自動取得されます。
+### 3. 環境変数を設定
 
-### 5. GitHub Actions の設定
+```bash
+cp .env.local.sample .env.local
+# .env.local を編集して上記の値を設定
+```
 
-GitHub の Settings > Secrets に以下を登録してください：
+### 4. ローカル動作確認
+
+```bash
+npm run dev
+```
+
+### 5. GitHub Secrets を登録
+
+GitHub の Settings > Secrets and variables > Actions に以下を登録：
 
 | Secret 名 | 値 |
 |---|---|
 | `AWS_ACCESS_KEY_ID` | AWS アクセスキー ID |
 | `AWS_SECRET_ACCESS_KEY` | AWS シークレットアクセスキー |
+| `VITE_APPSYNC_ENDPOINT` | CDK Output の AppSyncEndpoint |
+| `VITE_APPSYNC_API_KEY` | CDK Output の AppSyncApiKey |
 
-## 予定の更新
-
-コードの変更（UI修正など）は `main` ブランチへの push で GitHub Actions が自動デプロイします。
-
-**予定データの更新は git push 不要** です：
+### 6. 初回 push
 
 ```bash
-# src/data/events.ts を編集後
-npm run upload-events   # S3 に直接アップロード → 即時反映
+git push origin main
 ```
 
-## CI/CD の動作
+GitHub Actions が自動でフロントエンドをビルドして S3 + CloudFront にデプロイします。
 
-`main` ブランチへの push 時に GitHub Actions が以下を実行します：
+## 通常のデプロイ（コード変更時）
 
-1. フロントエンドビルド (`npm run build`)
+`main` ブランチへの push で自動実行されます：
+
+1. フロントエンドビルド (`npm run build`、VITE_ 環境変数を Secrets から注入)
 2. CDK デプロイ (`npx cdk deploy`)
-   - `dist/` の内容を S3 にアップロード
-   - CloudFront キャッシュを無効化 (`/*`)
-   - **`events.json` は上書きしない** (`prune: false` 設定済み)
+3. S3 に `dist/` をアップロード
+4. CloudFront キャッシュを無効化 (`/*`)
+
+## API キーの更新
+
+AppSync API キーは **365日** で失効します。失効前に以下を実行してください：
+
+```bash
+# CDK で新しいキーを発行（expiry を更新してから再デプロイ）
+cd infra && npx cdk deploy
+
+# GitHub Secrets の VITE_APPSYNC_API_KEY を新しい値に更新
+# .env.local も更新
+```
 
 ## その他のコマンド
 
@@ -78,6 +92,6 @@ cd infra && npx cdk diff
 # CloudFormation テンプレートを確認
 cd infra && npx cdk synth
 
-# スタックを削除（S3 バケットも含めて全削除）
+# スタックを削除（DynamoDB データも含めて全削除）
 cd infra && npx cdk destroy
 ```

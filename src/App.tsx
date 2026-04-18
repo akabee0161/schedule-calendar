@@ -1,12 +1,17 @@
+import { useState } from "react";
 import { useCalendar } from "./hooks/useCalendar";
-import { useEvents } from "./hooks/useEvents";
+import { useCalendarEvents } from "./hooks/useCalendarEvents";
 import { CalendarHeader } from "./components/CalendarHeader";
 import { CalendarGrid } from "./components/CalendarGrid";
+import { EventModal } from "./components/EventModal";
 
 function App() {
   const { year, month, days, goToPrevMonth, goToNextMonth, goToToday } =
     useCalendar();
-  const events = useEvents();
+  const { events, loading, createEvent, updateEvent, deleteEvent } =
+    useCalendarEvents();
+
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -17,7 +22,29 @@ function App() {
         onNext={goToNextMonth}
         onToday={goToToday}
       />
-      <CalendarGrid days={days} events={events} />
+
+      {loading ? (
+        <div className="flex h-64 items-center justify-center text-sm text-gray-400">
+          読み込み中…
+        </div>
+      ) : (
+        <CalendarGrid
+          days={days}
+          events={events}
+          onDayClick={setSelectedDate}
+        />
+      )}
+
+      {selectedDate !== null && (
+        <EventModal
+          date={selectedDate}
+          events={events[selectedDate] ?? []}
+          onClose={() => setSelectedDate(null)}
+          onCreate={createEvent}
+          onUpdate={updateEvent}
+          onDelete={deleteEvent}
+        />
+      )}
     </div>
   );
 }

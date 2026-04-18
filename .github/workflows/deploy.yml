@@ -27,6 +27,10 @@ jobs:
 
       - name: Build frontend
         run: npm run build
+        env:
+          # 初回 cdk deploy 後に GitHub Secrets へ登録する
+          VITE_APPSYNC_ENDPOINT: ${{ secrets.VITE_APPSYNC_ENDPOINT }}
+          VITE_APPSYNC_API_KEY: ${{ secrets.VITE_APPSYNC_API_KEY }}
 
       # Infra
       - name: Install infra dependencies
