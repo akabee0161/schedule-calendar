@@ -152,11 +152,15 @@ export function useCalendarEvents() {
   );
 
   const updateEvent = useCallback(async (ev: CalendarEvent) => {
-    const snapshot = ev;
-    setEvents((prev) => ({
-      ...prev,
-      [ev.date]: (prev[ev.date] ?? []).map((e) => (e.id === ev.id ? ev : e)),
-    }));
+    // 楽観的更新と同時に更新前の状態をスナップショットとして取得
+    let snapshot: CalendarEvent | undefined;
+    setEvents((prev) => {
+      snapshot = (prev[ev.date] ?? []).find((e) => e.id === ev.id);
+      return {
+        ...prev,
+        [ev.date]: (prev[ev.date] ?? []).map((e) => (e.id === ev.id ? ev : e)),
+      };
+    });
     try {
       await gql<{ updateEvent: CalendarEvent }>(UPDATE_EVENT, {
         id: ev.id,
@@ -165,12 +169,14 @@ export function useCalendarEvents() {
         color: ev.color,
       });
     } catch (err) {
-      setEvents((prev) => ({
-        ...prev,
-        [snapshot.date]: (prev[snapshot.date] ?? []).map((e) =>
-          e.id === snapshot.id ? snapshot : e,
-        ),
-      }));
+      // 失敗時は更新前の値に戻す
+      if (snapshot) {
+        const s = snapshot;
+        setEvents((prev) => ({
+          ...prev,
+          [s.date]: (prev[s.date] ?? []).map((e) => (e.id === s.id ? s : e)),
+        }));
+      }
       throw err;
     }
   }, []);

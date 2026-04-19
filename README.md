@@ -12,7 +12,7 @@
 
 ## ディレクトリ構成
 
-```
+```text
 ├── src/
 │   ├── components/
 │   │   ├── CalendarGrid.tsx      # グリッド表示（日付クリックでモーダルを開く）

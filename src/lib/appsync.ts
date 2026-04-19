@@ -1,5 +1,11 @@
-const ENDPOINT = import.meta.env.VITE_APPSYNC_ENDPOINT as string;
-const API_KEY = import.meta.env.VITE_APPSYNC_API_KEY as string;
+const ENDPOINT = import.meta.env.VITE_APPSYNC_ENDPOINT as string | undefined;
+const API_KEY = import.meta.env.VITE_APPSYNC_API_KEY as string | undefined;
+
+if (!ENDPOINT || !API_KEY) {
+  throw new Error(
+    "VITE_APPSYNC_ENDPOINT と VITE_APPSYNC_API_KEY を .env.local に設定してください",
+  );
+}
 
 // ─── HTTP GraphQL クライアント ────────────────────────────────────────
 
@@ -12,19 +18,25 @@ export async function gql<T>(
   query: string,
   variables?: Record<string, unknown>,
 ): Promise<T> {
-  const res = await fetch(ENDPOINT, {
+  const res = await fetch(ENDPOINT!, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": API_KEY,
+      "x-api-key": API_KEY!,
     },
     body: JSON.stringify({ query, variables }),
   });
+  if (!res.ok) {
+    throw new Error(`GraphQL request failed: HTTP ${res.status}`);
+  }
   const json: GqlResponse<T> = await res.json();
   if (json.errors?.length) {
     throw new Error(json.errors[0].message);
   }
-  return json.data as T;
+  if (json.data == null) {
+    throw new Error("GraphQL response contained no data");
+  }
+  return json.data;
 }
 
 // ─── WebSocket サブスクリプション ─────────────────────────────────────
@@ -38,13 +50,13 @@ export function subscribe(
   onData: (data: Record<string, unknown>) => void,
 ): () => void {
   // HTTP エンドポイント → WebSocket エンドポイントに変換
-  const realtimeEndpoint = ENDPOINT.replace("https://", "wss://").replace(
+  const realtimeEndpoint = ENDPOINT!.replace("https://", "wss://").replace(
     ".appsync-api.",
     ".appsync-realtime-api.",
   );
 
-  const host = new URL(ENDPOINT).host;
-  const header = btoa(JSON.stringify({ host, "x-api-key": API_KEY }));
+  const host = new URL(ENDPOINT!).host;
+  const header = btoa(JSON.stringify({ host, "x-api-key": API_KEY! }));
   const payload = btoa("{}");
 
   const ws = new WebSocket(
@@ -91,8 +103,8 @@ export function subscribe(
     }
   };
 
-  ws.onerror = () => {
-    // 接続エラー時は静かに終了（再接続は行わない）
+  ws.onerror = (event) => {
+    console.error("[AppSync] WebSocket error:", event);
   };
 
   return () => {

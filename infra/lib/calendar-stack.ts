@@ -175,8 +175,13 @@ export class CalendarStack extends cdk.Stack {
       description: "AppSync GraphQL endpoint → VITE_APPSYNC_ENDPOINT",
     });
 
+    if (!api.apiKey) {
+      throw new Error(
+        "AppSync API key が設定されていません。API_KEY 認証が有効か確認してください。",
+      );
+    }
     new cdk.CfnOutput(this, "AppSyncApiKey", {
-      value: api.apiKey!,
+      value: api.apiKey,
       description: "AppSync API Key → VITE_APPSYNC_API_KEY",
     });
   }
