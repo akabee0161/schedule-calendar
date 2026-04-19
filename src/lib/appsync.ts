@@ -100,11 +100,28 @@ export function subscribe(
         break;
       case "ka":
         break; // keep-alive: 無視
+      case "error":
+        console.error("[AppSync] Subscription error:", msg.id, msg.payload);
+        break;
+      case "connection_error":
+        console.error("[AppSync] Connection error:", msg.payload);
+        ws.close();
+        break;
     }
   };
 
   ws.onerror = (event) => {
     console.error("[AppSync] WebSocket error:", event);
+  };
+
+  ws.onclose = (event) => {
+    if (!closed) {
+      console.warn(
+        "[AppSync] WebSocket closed unexpectedly:",
+        event.code,
+        event.reason,
+      );
+    }
   };
 
   return () => {

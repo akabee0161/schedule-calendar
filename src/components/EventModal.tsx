@@ -93,6 +93,7 @@ export function EventModal({
           color: form.color,
         });
       }
+      setForm(initialForm);
       setMode("none");
       setEditingEvent(null);
     } catch {
@@ -108,6 +109,7 @@ export function EventModal({
     setForm((f) => ({ ...f, submitting: true }));
     try {
       await onDelete(ev);
+      setForm(initialForm);
       setMode("none");
       setEditingEvent(null);
     } catch {
@@ -205,10 +207,14 @@ export function EventModal({
             />
 
             {/* カラー選択 */}
-            <div className="mb-3 flex gap-1.5">
+            <div className="mb-3 flex gap-1.5" role="radiogroup" aria-label="色を選択">
               {PRESET_COLORS.map((c) => (
                 <button
                   key={c.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={form.color === c.value}
+                  tabIndex={form.color === c.value ? 0 : -1}
                   onClick={() => setForm((f) => ({ ...f, color: c.value }))}
                   className={`h-6 w-6 rounded-full transition-transform ${
                     form.color === c.value
