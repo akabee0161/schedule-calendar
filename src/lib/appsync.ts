@@ -59,10 +59,10 @@ export function subscribe(
   const header = btoa(JSON.stringify({ host, "x-api-key": API_KEY! }));
   const payload = btoa("{}");
 
-  const ws = new WebSocket(
-    `${realtimeEndpoint}?header=${header}&payload=${payload}`,
-    "graphql-ws",
-  );
+  const wsUrl = new URL(realtimeEndpoint);
+  wsUrl.searchParams.set("header", header);
+  wsUrl.searchParams.set("payload", payload);
+  const ws = new WebSocket(wsUrl.toString(), "graphql-ws");
 
   const subId = crypto.randomUUID();
   let closed = false;
@@ -105,6 +105,7 @@ export function subscribe(
         break;
       case "connection_error":
         console.error("[AppSync] Connection error:", msg.payload);
+        closed = true; // onclose を「予期しない切断」として扱わないようにフラグを立てる
         ws.close();
         break;
     }
