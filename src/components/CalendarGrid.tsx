@@ -6,6 +6,7 @@ const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"] as cons
 interface Props {
   days: CalendarDay[];
   events: Record<string, CalendarEvent[]>;
+  onDayClick: (dateKey: string) => void;
 }
 
 function weekdayColor(index: number): string {
@@ -21,7 +22,7 @@ function dayNumberColor(day: CalendarDay): string {
   return "text-gray-800";
 }
 
-export function CalendarGrid({ days, events }: Props) {
+export function CalendarGrid({ days, events, onDayClick }: Props) {
   return (
     <div className="grid grid-cols-7">
       {/* 曜日ヘッダー */}
@@ -40,8 +41,18 @@ export function CalendarGrid({ days, events }: Props) {
         return (
           <div
             key={day.dateKey}
-            className={`min-h-[4.5rem] border-b border-r border-gray-100 p-1 sm:min-h-[5.5rem] ${
-              day.isToday ? "bg-yellow-50" : ""
+            role="button"
+            tabIndex={0}
+            aria-label={day.dateKey}
+            onClick={() => onDayClick(day.dateKey)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onDayClick(day.dateKey);
+              }
+            }}
+            className={`min-h-[4.5rem] cursor-pointer border-b border-r border-gray-100 p-1 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 sm:min-h-[5.5rem] ${
+              day.isToday ? "bg-yellow-50 hover:bg-yellow-100" : ""
             }`}
           >
             <div className="flex items-start justify-between">
@@ -57,9 +68,9 @@ export function CalendarGrid({ days, events }: Props) {
               )}
             </div>
             <div className="mt-0.5 flex flex-col gap-0.5">
-              {dayEvents.map((ev, i) => (
+              {dayEvents.map((ev) => (
                 <span
-                  key={i}
+                  key={ev.id}
                   className="truncate rounded px-1 text-[0.65rem] leading-4 text-white sm:text-xs"
                   style={{ backgroundColor: ev.color ?? "#6b7280" }}
                 >

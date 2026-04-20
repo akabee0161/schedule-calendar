@@ -2,7 +2,7 @@
 
 ## プロジェクト概要
 
-家族向けカレンダー・ダッシュボード。AWS S3 + CloudFront で配信。予定データ (`events.ts`) は個人情報を含むため git 管理外とし、S3 に直接アップロードする運用。
+家族向けカレンダー・ダッシュボード。AWS S3 + CloudFront で配信。予定データは DynamoDB に保存し、AppSync (GraphQL) 経由で CRUD 操作する。UI から予定の追加・編集・削除が可能。
 
 ## 現在の状態
 
@@ -10,6 +10,7 @@
 - **Phase 2 (カレンダーUI)**: 完了
 - **Phase 3 (CDK インフラ)**: 完了
 - **Phase 4 (GitHub Actions CI/CD)**: 完了
+- **Phase 5 (AppSync + DynamoDB CRUD)**: 完了
 - **リモート**: `origin` → `https://github.com/akabee0161/schedule-calendar.git`
 
 ## push 時の注意
@@ -18,18 +19,12 @@
 - `.bashrc` に `export GCM_CREDENTIAL_STORE=gpg` が設定済み（120行目）
 - non-interactive shell だと `.bashrc` のインタラクティブチェックでスキップされるため、Bash ツールからは `export GCM_CREDENTIAL_STORE=gpg` を先に実行する必要がある
 
-## 予定データの運用
-
-`src/data/events.ts` は gitignore 済み。編集後は以下で S3 に直接アップロードする：
+## 初回セットアップ（新環境）
 
 ```bash
-npm run upload-events   # CloudFormation から自動でバケット名を取得してアップロード
-```
-
-ローカル開発時は先に以下を実行して `public/events.json` を生成する：
-
-```bash
-npm run gen-events
+cp .env.local.sample .env.local
+# .env.local に AppSync のエンドポイントと API キーを設定
+npm install
 npm run dev
 ```
 
@@ -37,17 +32,26 @@ npm run dev
 
 ```bash
 # フロントエンド
-npm install              # 依存関係インストール
-npm run gen-events       # public/events.json を生成（dev 前に実行）
-npm run dev              # 開発サーバー起動
-npm run build            # プロダクションビルド (dist/ 生成)
-npm run upload-events    # events.json を S3 にアップロード（予定更新時）
+npm install        # 依存関係インストール
+npm run dev        # 開発サーバー起動（要 .env.local）
+npm run build      # プロダクションビルド (dist/ 生成)
 
 # インフラ (infra/ ディレクトリ内)
-npx cdk synth            # CloudFormation テンプレート生成
-npx cdk deploy           # デプロイ
-npx cdk destroy          # スタック削除
+npx cdk synth      # CloudFormation テンプレート生成
+npx cdk deploy     # デプロイ（初回 or インフラ変更時）
+npx cdk destroy    # スタック削除
 ```
+
+## 環境変数
+
+`.env.local`（gitignore 済み）に以下を設定する：
+
+| 変数名 | 説明 | 取得元 |
+|---|---|---|
+| `VITE_APPSYNC_ENDPOINT` | AppSync GraphQL エンドポイント | CDK deploy の Output |
+| `VITE_APPSYNC_API_KEY` | AppSync API キー | CDK deploy の Output |
+
+GitHub Actions の Secrets にも同じ値を登録する（CI ビルド用）。
 
 ## アーキテクチャ決定事項
 
@@ -55,6 +59,8 @@ npx cdk destroy          # スタック削除
 - SPA 対応: CloudFront で 403/404 → index.html にフォールバック
 - BucketDeployment で `distributionPaths: ["/*"]` によるキャッシュ無効化
 - `RemovalPolicy.DESTROY` + `autoDeleteObjects: true` で検証しやすく設定
-- BucketDeployment に `prune: false` を設定し、S3 上の `events.json` を保護
-- フロントエンドは `/events.json` をランタイム fetch（`src/hooks/useEvents.ts`）
-- `CalendarEvent` 型は `src/data/types.ts` で定義（git 管理）し、`events.ts` からは re-export
+- DynamoDB: PAY_PER_REQUEST（オンデマンド）でコスト最小化
+- AppSync: API_KEY 認証、X-Ray/ログ無効でコスト最小化
+- AppSync サブスクリプション: `@aws_subscribe` + None データソースで実装
+- フロントエンドは楽観的更新 + WebSocket サブスクリプションで即時反映
+- `CalendarEvent` 型は `src/data/types.ts` で定義（git 管理）

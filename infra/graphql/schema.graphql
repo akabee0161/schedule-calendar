@@ -1,0 +1,22 @@
+type CalendarEvent {
+  id: ID!
+  date: String!
+  title: String!
+  color: String
+}
+
+type Query {
+  listEvents: [CalendarEvent!]!
+}
+
+type Mutation {
+  createEvent(date: String!, title: String!, color: String): CalendarEvent!
+  updateEvent(id: ID!, date: String!, title: String!, color: String): CalendarEvent!
+  deleteEvent(id: ID!, date: String!): CalendarEvent!
+}
+
+type Subscription {
+  onCreateEvent: CalendarEvent @aws_subscribe(mutations: ["createEvent"])
+  onUpdateEvent: CalendarEvent @aws_subscribe(mutations: ["updateEvent"])
+  onDeleteEvent: CalendarEvent @aws_subscribe(mutations: ["deleteEvent"])
+}
