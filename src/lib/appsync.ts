@@ -48,6 +48,7 @@ export async function gql<T>(
 export function subscribe(
   query: string,
   onData: (data: Record<string, unknown>) => void,
+  onError?: (payload: unknown) => void,
 ): () => void {
   // HTTP エンドポイント → WebSocket エンドポイントに変換
   const realtimeEndpoint = ENDPOINT!.replace("https://", "wss://").replace(
@@ -108,6 +109,9 @@ export function subscribe(
         break; // keep-alive: 無視
       case "error":
         console.error("[AppSync] Subscription error:", msg.id, msg.payload);
+        onError?.(msg.payload);
+        closed = true;
+        ws.close();
         break;
       case "connection_error":
         console.error("[AppSync] Connection error:", msg.payload);
