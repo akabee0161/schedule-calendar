@@ -24,7 +24,6 @@ export function request(ctx) {
       expression: "attribute_exists(#id)",
       expressionNames: { "#id": "id" },
     },
-    returnValues: "ALL_NEW",
   };
 }
 

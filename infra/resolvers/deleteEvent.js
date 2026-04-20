@@ -7,7 +7,6 @@ export function request(ctx) {
       date: util.dynamodb.toDynamoDB(ctx.args.date),
       id: util.dynamodb.toDynamoDB(ctx.args.id),
     },
-    returnValues: "ALL_OLD",
   };
 }
 
