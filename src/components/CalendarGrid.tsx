@@ -4,6 +4,7 @@ import type { CalendarEvent } from "../data/types";
 
 const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"] as const;
 const SWIPE_THRESHOLD = 50;
+const HORIZONTAL_DOMINANCE_RATIO = 1.5;
 
 interface Props {
   days: CalendarDay[];
@@ -48,7 +49,7 @@ export function CalendarGrid({
     const dx = t.clientX - start.x;
     const dy = t.clientY - start.y;
     if (Math.abs(dx) < SWIPE_THRESHOLD) return;
-    if (Math.abs(dx) < Math.abs(dy) * 1.5) return; // 縦方向と紛らわしい場合は無視
+    if (Math.abs(dx) < Math.abs(dy) * HORIZONTAL_DOMINANCE_RATIO) return; // 縦方向と紛らわしい場合は無視
     if (dx < 0) onSwipeLeft?.();
     else onSwipeRight?.();
   };

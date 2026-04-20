@@ -9,6 +9,9 @@ interface Props {
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
+const SELECT_CLASS =
+  "cursor-pointer rounded border border-gray-300 bg-white px-1 py-0.5 text-lg font-bold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400";
+
 function buildYearOptions(current: number): number[] {
   const today = new Date().getFullYear();
   const set = new Set([today - 1, today, today + 1, current]);
@@ -40,7 +43,7 @@ export function CalendarHeader({
             aria-label="年を選択"
             value={year}
             onChange={(e) => onYearChange(Number(e.target.value))}
-            className="cursor-pointer rounded border border-gray-300 bg-white px-1 py-0.5 text-lg font-bold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className={SELECT_CLASS}
           >
             {yearOptions.map((y) => (
               <option key={y} value={y}>
@@ -55,7 +58,7 @@ export function CalendarHeader({
             aria-label="月を選択"
             value={month}
             onChange={(e) => onMonthChange(Number(e.target.value))}
-            className="cursor-pointer rounded border border-gray-300 bg-white px-1 py-0.5 text-lg font-bold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className={SELECT_CLASS}
           >
             {MONTHS.map((m) => (
               <option key={m} value={m}>
