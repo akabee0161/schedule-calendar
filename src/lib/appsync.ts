@@ -72,11 +72,17 @@ export function subscribe(
   };
 
   ws.onmessage = (event: MessageEvent<string>) => {
-    const msg = JSON.parse(event.data) as {
+    let msg: {
       type: string;
       id?: string;
       payload?: { data?: Record<string, unknown> };
     };
+    try {
+      msg = JSON.parse(event.data) as typeof msg;
+    } catch {
+      console.error("[AppSync] Failed to parse message:", event.data);
+      return;
+    }
 
     switch (msg.type) {
       case "connection_ack":

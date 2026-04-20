@@ -85,8 +85,16 @@ export function useCalendarEvents() {
       const ev = (data as { onCreateEvent: CalendarEvent }).onCreateEvent;
       setEvents((prev) => {
         const existing = prev[ev.date] ?? [];
-        // 楽観的更新で既に追加済みの場合はスキップ
         if (existing.some((e) => e.id === ev.id)) return prev;
+        // temp-id エントリ（同タイトル）を実IDで置換して重複を防ぐ
+        const tempIdx = existing.findIndex(
+          (e) => e.id.startsWith("temp-") && e.title === ev.title,
+        );
+        if (tempIdx !== -1) {
+          const updated = [...existing];
+          updated[tempIdx] = ev;
+          return { ...prev, [ev.date]: updated };
+        }
         return { ...prev, [ev.date]: [...existing, ev] };
       });
     });
@@ -134,12 +142,14 @@ export function useCalendarEvents() {
           color,
         });
         const realEv = data.createEvent;
-        setEvents((prev) => ({
-          ...prev,
-          [date]: (prev[date] ?? []).map((e) =>
-            e.id === tempId ? realEv : e,
-          ),
-        }));
+        setEvents((prev) => {
+          const list = prev[date] ?? [];
+          // サブスクリプションが先に実IDを追加済みの場合はtempエントリを除去するだけ
+          if (list.some((e) => e.id === realEv.id)) {
+            return { ...prev, [date]: list.filter((e) => e.id !== tempId) };
+          }
+          return { ...prev, [date]: list.map((e) => (e.id === tempId ? realEv : e)) };
+        });
       } catch (err) {
         setEvents((prev) => ({
           ...prev,

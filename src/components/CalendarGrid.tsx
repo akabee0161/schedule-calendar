@@ -41,8 +41,17 @@ export function CalendarGrid({ days, events, onDayClick }: Props) {
         return (
           <div
             key={day.dateKey}
+            role="button"
+            tabIndex={0}
+            aria-label={day.dateKey}
             onClick={() => onDayClick(day.dateKey)}
-            className={`min-h-[4.5rem] cursor-pointer border-b border-r border-gray-100 p-1 transition-colors hover:bg-blue-50 sm:min-h-[5.5rem] ${
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onDayClick(day.dateKey);
+              }
+            }}
+            className={`min-h-[4.5rem] cursor-pointer border-b border-r border-gray-100 p-1 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 sm:min-h-[5.5rem] ${
               day.isToday ? "bg-yellow-50 hover:bg-yellow-100" : ""
             }`}
           >

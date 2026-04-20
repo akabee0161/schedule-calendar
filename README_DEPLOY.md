@@ -24,7 +24,7 @@ cd infra && npx cdk deploy
 
 デプロイ完了後、以下の Outputs が表示されます：
 
-```
+```text
 FamilyCalendarStack.AppSyncEndpoint = https://xxxx.appsync-api.ap-northeast-1.amazonaws.com/graphql
 FamilyCalendarStack.AppSyncApiKey   = da2-xxxx
 FamilyCalendarStack.DistributionDomainName = xxxx.cloudfront.net

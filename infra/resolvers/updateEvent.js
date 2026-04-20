@@ -20,6 +20,10 @@ export function request(ctx) {
           : { ":title": title },
       ),
     },
+    condition: {
+      expression: "attribute_exists(#id)",
+      expressionNames: { "#id": "id" },
+    },
     returnValues: "ALL_NEW",
   };
 }
