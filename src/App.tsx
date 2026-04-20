@@ -6,8 +6,15 @@ import { CalendarGrid } from "./components/CalendarGrid";
 import { EventModal } from "./components/EventModal";
 
 function App() {
-  const { year, month, days, goToPrevMonth, goToNextMonth, goToToday } =
-    useCalendar();
+  const {
+    year,
+    month,
+    days,
+    setYear,
+    setMonth,
+    goToPrevMonth,
+    goToNextMonth,
+  } = useCalendar();
   const { events, loading, createEvent, updateEvent, deleteEvent } =
     useCalendarEvents();
 
@@ -20,7 +27,8 @@ function App() {
         month={month}
         onPrev={goToPrevMonth}
         onNext={goToNextMonth}
-        onToday={goToToday}
+        onYearChange={setYear}
+        onMonthChange={setMonth}
       />
 
       {loading ? (
@@ -32,6 +40,8 @@ function App() {
           days={days}
           events={events}
           onDayClick={setSelectedDate}
+          onSwipeLeft={goToNextMonth}
+          onSwipeRight={goToPrevMonth}
         />
       )}
 
