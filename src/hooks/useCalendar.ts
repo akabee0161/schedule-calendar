@@ -5,9 +5,10 @@ export interface UseCalendarReturn {
   year: number;
   month: number;
   days: CalendarDay[];
+  setYear: (y: number) => void;
+  setMonth: (m: number) => void;
   goToPrevMonth: () => void;
   goToNextMonth: () => void;
-  goToToday: () => void;
 }
 
 export function useCalendar(): UseCalendarReturn {
@@ -35,11 +36,5 @@ export function useCalendar(): UseCalendarReturn {
     }
   };
 
-  const goToToday = () => {
-    const today = new Date();
-    setYear(today.getFullYear());
-    setMonth(today.getMonth() + 1);
-  };
-
-  return { year, month, days, goToPrevMonth, goToNextMonth, goToToday };
+  return { year, month, days, setYear, setMonth, goToPrevMonth, goToNextMonth };
 }

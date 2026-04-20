@@ -1,12 +1,16 @@
+import { useRef } from "react";
 import type { CalendarDay } from "../utils/calendar";
 import type { CalendarEvent } from "../data/types";
 
 const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"] as const;
+const SWIPE_THRESHOLD = 50;
 
 interface Props {
   days: CalendarDay[];
   events: Record<string, CalendarEvent[]>;
   onDayClick: (dateKey: string) => void;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
 }
 
 function weekdayColor(index: number): string {
@@ -22,9 +26,39 @@ function dayNumberColor(day: CalendarDay): string {
   return "text-gray-800";
 }
 
-export function CalendarGrid({ days, events, onDayClick }: Props) {
+export function CalendarGrid({
+  days,
+  events,
+  onDayClick,
+  onSwipeLeft,
+  onSwipeRight,
+}: Props) {
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStart.current = { x: t.clientX, y: t.clientY };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < SWIPE_THRESHOLD) return;
+    if (Math.abs(dx) < Math.abs(dy) * 1.5) return; // 縦方向と紛らわしい場合は無視
+    if (dx < 0) onSwipeLeft?.();
+    else onSwipeRight?.();
+  };
+
   return (
-    <div className="grid grid-cols-7">
+    <div
+      className="grid grid-cols-7 touch-pan-y"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* 曜日ヘッダー */}
       {WEEKDAY_LABELS.map((label, i) => (
         <div
@@ -51,7 +85,7 @@ export function CalendarGrid({ days, events, onDayClick }: Props) {
                 onDayClick(day.dateKey);
               }
             }}
-            className={`min-h-[4.5rem] cursor-pointer border-b border-r border-gray-100 p-1 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 sm:min-h-[5.5rem] ${
+            className={`min-h-[7rem] cursor-pointer border-b border-r border-gray-100 p-0.5 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 sm:min-h-[5.5rem] sm:p-1 ${
               day.isToday ? "bg-yellow-50 hover:bg-yellow-100" : ""
             }`}
           >
@@ -71,7 +105,7 @@ export function CalendarGrid({ days, events, onDayClick }: Props) {
               {dayEvents.map((ev) => (
                 <span
                   key={ev.id}
-                  className="truncate rounded px-1 text-[0.65rem] leading-4 text-white sm:text-xs"
+                  className="line-clamp-2 break-words rounded px-0.5 text-[0.55rem] leading-tight text-white sm:px-1 sm:text-xs"
                   style={{ backgroundColor: ev.color ?? "#6b7280" }}
                 >
                   {ev.title}
