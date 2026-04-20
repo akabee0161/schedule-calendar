@@ -64,7 +64,7 @@ export function CalendarGrid({
       {WEEKDAY_LABELS.map((label, i) => (
         <div
           key={label}
-          className={`border-b border-gray-200 py-1 text-center text-xs font-semibold ${weekdayColor(i)}`}
+          className={`border-b border-gray-200 py-1 text-center text-sm font-semibold ${weekdayColor(i)}`}
         >
           {label}
         </div>
@@ -86,18 +86,18 @@ export function CalendarGrid({
                 onDayClick(day.dateKey);
               }
             }}
-            className={`min-h-[7rem] cursor-pointer border-b border-r border-gray-100 p-0.5 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 sm:min-h-[5.5rem] sm:p-1 ${
+            className={`min-h-[calc((100dvh-7rem)/6)] cursor-pointer border-b border-r border-gray-100 p-0.5 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400 sm:min-h-[5.5rem] sm:p-1 ${
               day.isToday ? "bg-yellow-50 hover:bg-yellow-100" : ""
             }`}
           >
             <div className="flex items-start justify-between">
               <span
-                className={`inline-block text-xs font-medium leading-5 sm:text-sm ${dayNumberColor(day)}`}
+                className={`inline-block text-sm font-medium leading-5 ${dayNumberColor(day)}`}
               >
                 {day.date.getDate()}
               </span>
               {day.isHoliday && day.isCurrentMonth && (
-                <span className="truncate text-[0.6rem] leading-5 text-red-400">
+                <span className="truncate text-xs leading-5 text-red-400">
                   {day.holidayName}
                 </span>
               )}
@@ -106,7 +106,7 @@ export function CalendarGrid({
               {dayEvents.map((ev) => (
                 <span
                   key={ev.id}
-                  className="line-clamp-2 break-words rounded px-0.5 text-[0.55rem] leading-tight text-white sm:px-1 sm:text-xs"
+                  className="line-clamp-2 break-words rounded px-1 text-sm leading-tight text-white"
                   style={{ backgroundColor: ev.color ?? "#6b7280" }}
                 >
                   {ev.title}
