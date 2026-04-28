@@ -2,6 +2,8 @@
 
 家族向けのシンプルなカレンダー・ダッシュボードです。日本の祝日や家族の予定がひと目で分かり、UI から予定の追加・編集・削除ができます。
 
+同一コードベースから **2 つの独立したスタック**（家族共有用 / 個人用）を AWS 上にデプロイできる構成になっています。データはスタックごとに完全分離されます。
+
 ## 技術スタック
 
 - **Frontend**: React (Vite), TypeScript, Tailwind CSS
@@ -36,7 +38,7 @@
 │   │   ├── updateEvent.js
 │   │   ├── deleteEvent.js
 │   │   └── subscriptionPassthrough.js
-│   ├── bin/infra.ts             # CDK エントリーポイント
+│   ├── bin/infra.ts             # CDK エントリーポイント（Family / Personal の 2 スタック）
 │   └── lib/calendar-stack.ts    # S3 + CloudFront + DynamoDB + AppSync スタック定義
 ├── .github/workflows/
 │   └── deploy.yml               # GitHub Actions CI/CD
@@ -69,7 +71,12 @@ npm run dev
 
 詳細は [README_DEPLOY.md](README_DEPLOY.md) を参照。
 
-`main` ブランチへの push で GitHub Actions が自動ビルド + CDK デプロイを実行します。
+`main` ブランチへの push で GitHub Actions が以下を自動実行します:
+
+1. フロントエンドを家族用・個人用 2 種類ビルド (`dist-family/` / `dist-personal/`)
+2. `FamilyCalendarStack` と `PersonalCalendarStack` の両方を CDK でデプロイ
+
+それぞれが独立した S3/CloudFront/DynamoDB/AppSync を持つので、家族用と個人用のデータは完全に分離されます。
 
 ## カレンダーの特徴
 

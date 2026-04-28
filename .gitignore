@@ -9,6 +9,8 @@ lerna-debug.log*
 
 node_modules
 dist
+dist-family
+dist-personal
 dist-ssr
 *.local
 

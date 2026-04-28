@@ -8,8 +8,12 @@ import * as appsync from "aws-cdk-lib/aws-appsync";
 import { Construct } from "constructs";
 import * as path from "path";
 
+export interface CalendarStackProps extends cdk.StackProps {
+  distPath: string;
+}
+
 export class CalendarStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: CalendarStackProps) {
     super(scope, id, props);
 
     // ─── DynamoDB ────────────────────────────────────────────────────
@@ -150,9 +154,7 @@ export class CalendarStack extends cdk.Stack {
     });
 
     new s3deploy.BucketDeployment(this, "DeploySite", {
-      sources: [
-        s3deploy.Source.asset(path.join(__dirname, "..", "..", "dist")),
-      ],
+      sources: [s3deploy.Source.asset(props.distPath)],
       destinationBucket: siteBucket,
       distribution,
       distributionPaths: ["/*"],
