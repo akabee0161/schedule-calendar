@@ -25,12 +25,22 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Build frontend
-        run: npm run build
+      - name: Type-check
+        run: npx tsc -b
+
+      - name: Build frontend (family)
+        run: npx vite build --outDir dist-family
         env:
           # 初回 cdk deploy 後に GitHub Secrets へ登録する
           VITE_APPSYNC_ENDPOINT: ${{ secrets.VITE_APPSYNC_ENDPOINT }}
           VITE_APPSYNC_API_KEY: ${{ secrets.VITE_APPSYNC_API_KEY }}
+
+      - name: Build frontend (personal)
+        run: npx vite build --outDir dist-personal
+        env:
+          # PersonalCalendarStack 初回 deploy 後に GitHub Secrets へ登録する
+          VITE_APPSYNC_ENDPOINT: ${{ secrets.VITE_APPSYNC_ENDPOINT_PERSONAL }}
+          VITE_APPSYNC_API_KEY: ${{ secrets.VITE_APPSYNC_API_KEY_PERSONAL }}
 
       # Infra
       - name: Install infra dependencies
@@ -45,6 +55,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-1
 
-      - name: CDK deploy
-        run: npx cdk deploy --require-approval never
+      - name: CDK deploy (all stacks)
+        run: npx cdk deploy --all --require-approval never
         working-directory: infra
