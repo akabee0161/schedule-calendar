@@ -3,6 +3,7 @@ name: Deploy Family Calendar
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -34,6 +35,7 @@ jobs:
           # 初回 cdk deploy 後に GitHub Secrets へ登録する
           VITE_APPSYNC_ENDPOINT: ${{ secrets.VITE_APPSYNC_ENDPOINT }}
           VITE_APPSYNC_API_KEY: ${{ secrets.VITE_APPSYNC_API_KEY }}
+          VITE_CALENDAR_TITLE: ファミリーカレンダー
 
       - name: Build frontend (personal)
         run: npx vite build --outDir dist-personal
@@ -41,6 +43,7 @@ jobs:
           # PersonalCalendarStack 初回 deploy 後に GitHub Secrets へ登録する
           VITE_APPSYNC_ENDPOINT: ${{ secrets.VITE_APPSYNC_ENDPOINT_PERSONAL }}
           VITE_APPSYNC_API_KEY: ${{ secrets.VITE_APPSYNC_API_KEY_PERSONAL }}
+          VITE_CALENDAR_TITLE: パーソナルカレンダー
 
       # Infra
       - name: Install infra dependencies
