@@ -4,7 +4,9 @@ import { CalendarStack } from "../lib/calendar-stack";
 
 test("S3 Bucket and CloudFront Distribution created", () => {
   const app = new cdk.App();
-  const stack = new CalendarStack(app, "TestStack");
+  const stack = new CalendarStack(app, "TestStack", {
+    distPath: __dirname,
+  });
   const template = Template.fromStack(stack);
 
   template.hasResourceProperties("AWS::S3::Bucket", {
