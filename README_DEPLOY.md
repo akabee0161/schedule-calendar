@@ -79,6 +79,15 @@ git push origin main
 
 GitHub Actions が自動でフロントエンドを 2 種類ビルドし、両スタックを S3 + CloudFront にデプロイします。
 
+## 手動デプロイ
+
+`main` への push 以外に、GitHub の Actions タブからワークフローを手動実行することもできます。
+Secrets を更新した後など、コード変更なしで再デプロイしたい場合に利用してください。
+
+1. GitHub リポジトリの Actions タブを開く
+2. 左メニューの `Deploy Family Calendar` を選択
+3. 右上の `Run workflow` ボタン → `main` を選んで実行
+
 ## 通常のデプロイ（コード変更時）
 
 `main` ブランチへの push で自動実行されます：
